@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ SPARK GENESIS — AI Platform</title>
+<meta name="description" content="Postav cokoliv pomocí AI. App, web, obrázky, video, kód — vše v jednom. Žádná registrace.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000000;--surface:rgba(255,255,255,0.025);--border:rgba(255,255,255,0.08);
+  --text:rgba(255,255,255,0.85);--muted:rgba(255,255,255,0.3);--dim:rgba(255,255,255,0.12);
+  --green:#00ff88;--blue:#60a5fa;--pink:#f472b6;--orange:#fb923c;--purple:#a78bfa;--yellow:#fbbf24;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.07);border-radius:2px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.94)}}
+@keyframes shimmer{0%{background-position:-400% 0}100%{background-position:400% 0}}
+@keyframes neon{0%,100%{text-shadow:0 0 8px currentColor,0 0 16px currentColor}50%{text-shadow:0 0 20px currentColor,0 0 40px currentColor}}
+@keyframes voiceRing{0%{box-shadow:0 0 0 0 rgba(0,255,136,0.7)}70%{box-shadow:0 0 0 18px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
+@keyframes appear{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+@keyframes scanline{0%{top:-5%}100%{top:105%}}
+
+/* Inputs */
+.inp{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13.5px;padding:13px 17px;outline:none;resize:none;transition:all 0.2s;line-height:1.75}
+.inp:focus{background:rgba(255,255,255,0.035);border-color:rgba(255,255,255,0.18)}
+.inp::placeholder{color:var(--dim)}
+
+/* Buttons */
+.mic{background:transparent;border:1.5px solid var(--border);color:var(--muted);font-size:15px;width:42px;height:42px;border-radius:10px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mic.on{border-color:var(--green);color:var(--green);animation:voiceRing 1.2s infinite}
+.mic:hover{border-color:rgba(255,255,255,0.25);color:rgba(255,255,255,0.7)}
+.icon-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.icon-btn:hover{border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7)}
+.exec-btn{border:none;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;padding:11px 20px;border-radius:10px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;text-transform:uppercase;height:42px}
+.exec-btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.exec-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;filter:none}
+.modbtn{background:transparent;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.15s;padding:7px 10px;display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.5px;white-space:nowrap}
+.modbtn:hover{border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);transform:translateY(-1px)}
+.modbtn.on{color:#000;border-color:transparent;transform:translateY(-1px)}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;color:var(--muted);transition:all 0.15s;white-space:nowrap}
+.chip:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7)}
+.action-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:7px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:800;letter-spacing:1px;cursor:pointer;text-decoration:none;border:none;transition:all 0.15s}
+.action-btn:hover{filter:brightness(1.1)}
+
+/* Messages */
+.msg{animation:fadeUp 0.3s ease;margin-bottom:14px}
+pre{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:14px;overflow-x:auto;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word;margin:6px 0}
+code{font-family:'JetBrains Mono',monospace;font-size:12px}
+
+/* Progress */
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--mc,#00ff88),rgba(255,255,255,0.8),var(--mc,#00ff88));background-size:300% 100%;animation:shimmer 1.5s linear infinite;transition:width 0.5s cubic-bezier(0.4,0,0.2,1)}
+
+/* Notif */
+.notif{position:fixed;top:14px;right:14px;z-index:9999;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:600;animation:appear 0.3s ease;letter-spacing:0.5px;pointer-events:none}
+
+/* Agent cards */
+.agent-card{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:10px 14px;cursor:pointer;transition:all 0.2s;text-align:left;font-family:'JetBrains Mono',monospace}
+.agent-card:hover{transform:translateY(-2px)}
+.agent-card.sel{transform:translateY(-2px)}
+
+/* Image card */
+.img-card{border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);background:var(--surface);transition:all 0.2s}
+.img-card:hover{transform:scale(1.01)}
+.img-card img{width:100%;display:block}
+
+/* Topbar */
+#topbar{display:flex;align-items:center;gap:8px;padding:0 14px;height:46px;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(0,0,0,0.95);flex-shrink:0;overflow:hidden}
+#modules{display:flex;gap:3px;overflow-x:auto;flex:1;padding:0 4px}
+#modules::-webkit-scrollbar{height:0}
+#logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;color:var(--green);animation:neon 3s ease-in-out infinite;letter-spacing:3px;white-space:nowrap;cursor:pointer}
+#logo-sub{font-size:8px;color:rgba(255,255,255,0.15);letter-spacing:2px;white-space:nowrap}
+
+/* Layout */
+#main{flex:1;display:flex;overflow:hidden}
+#left{display:flex;flex-direction:column;overflow:hidden;transition:width 0.3s ease;min-width:0}
+#right{flex:1;display:flex;flex-direction:column;background:#000;min-width:0;animation:appear 0.3s ease;border-left:1px solid rgba(255,255,255,0.05)}
+#chat-area{flex:1;overflow-y:auto;padding:14px}
+#input-bar{padding:10px 14px;border-top:1px solid rgba(255,255,255,0.05);background:rgba(0,0,0,0.95);flex-shrink:0}
+#status-bar{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:24px;border-top:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.98);flex-shrink:0;font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:0.8px;flex-shrink:0}
+
+/* Subpanels */
+.subpanel{border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;animation:appear 0.2s ease;overflow-y:auto}
+
+/* Preview header */
+#prev-header{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:40px;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0}
+
+/* Video player */
+#video-player{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1)}
+#video-img{width:100%;display:block;min-height:200px;object-fit:cover}
+#video-controls{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.95));padding:20px 16px 14px}
+
+/* Proj rows */
+.proj-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s}
+.proj-row:hover{background:rgba(255,255,255,0.03)}
+</style>
+</head>
+<body>
+
+<!-- NOTIFICATION -->
+<div id="notif-el" class="notif" style="display:none"></div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="logo" onclick="resetToHome()">⚡ SPARK</div>
+  <div id="logo-sub">GENESIS</div>
+  <div id="modules"></div>
+  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <button onclick="toggleProjects()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:rgba(255,255,255,0.4);padding:5px 10px;border-radius:8px;cursor:pointer;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:1px" id="proj-btn">📁 0</button>
+    <div id="status-dot" style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite"></div>
+    <span id="uid-display" style="font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:1px"></span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LEFT PANEL -->
+  <div id="left" style="width:100%">
+
+    <!-- PROJECTS PANEL -->
+    <div id="projects-panel" class="subpanel" style="display:none;max-height:220px"></div>
+
+    <!-- IMAGE CONTROLS -->
+    <div id="img-controls" class="subpanel" style="display:none;padding:10px 14px"></div>
+
+    <!-- VIDEO CONTROLS -->
+    <div id="vid-controls" class="subpanel" style="display:none;padding:10px 14px"></div>
+
+    <!-- AGENT PANEL -->
+    <div id="agent-panel" class="subpanel" style="display:none;padding:14px"></div>
+
+    <!-- MEMORY PANEL -->
+    <div id="memory-panel" class="subpanel" style="display:none;max-height:150px;padding:10px 14px"></div>
+
+    <!-- MARKET PANEL -->
+    <div id="market-panel" class="subpanel" style="display:none;max-height:200px;padding:10px 14px;overflow-y:auto"></div>
+
+    <!-- CHAT -->
+    <div id="chat-area"></div>
+
+    <!-- EDIT MODE -->
+    <div id="edit-bar" style="display:none;padding:10px 14px;border-top:1px solid rgba(0,255,136,0.2);background:rgba(0,255,136,0.05);flex-shrink:0;animation:appear 0.2s ease">
+      <div style="font-size:9px;color:rgba(0,255,136,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">✏️ EDIT VERSION CONTROL</div>
+      <div style="display:flex;gap:8px">
+        <input id="edit-input" class="inp" style="height:38px;padding:8px 13px;font-size:12px" placeholder='Co změnit? "Přidej login", "Změň barvy", "Přidej dark mode"...'
+          onkeydown="if(event.key==='Enter')doEdit()">
+        <button onclick="doEdit()" style="background:#00ff88;border:none;color:#000;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:800;letter-spacing:1px;flex-shrink:0">UPDATE</button>
+        <button onclick="document.getElementById('edit-bar').style.display='none'" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer;flex-shrink:0">✕</button>
+      </div>
+    </div>
+
+    <!-- INPUT BAR -->
+    <div id="input-bar">
+      <div style="margin-bottom:7px">
+        <textarea id="main-input" class="inp" rows="3"
+          placeholder="Postav cokoliv — v libovolném jazyce... (Ctrl+Enter)"
+          onkeydown="if(event.ctrlKey&&event.key==='Enter')execute()"
+          oninput="onInputChange()"></textarea>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button id="mic-btn" class="mic" onclick="toggleVoice()" title="Hlasové ovládání">🎤</button>
+        <label class="icon-btn" title="Nahrát soubor" style="cursor:pointer">
+          📎<input type="file" id="file-input" style="display:none" onchange="handleFile(event)" accept="*/*">
+        </label>
+        <button id="edit-toggle" onclick="document.getElementById('edit-bar').style.display='flex';document.getElementById('edit-bar').style.flexDirection='column'" style="display:none;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);padding:0 13px;height:42px;border-radius:10px;cursor:pointer;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:1px;white-space:nowrap">✏️ EDIT</button>
+        <button id="exec-btn" class="exec-btn" onclick="execute()" style="flex:1;background:var(--green);color:#000">⚡ BUILD & DEPLOY</button>
+      </div>
+      <div style="margin-top:5px;display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:1px">
+        <span id="lang-detect">ZERO-LOGIN · AUTO-SAVE · ALL LANGUAGES</span>
+        <span id="mem-count">🧠 0 memories · CTRL+ENTER</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right" style="display:none;flex:1;flex-direction:column">
+    <div id="prev-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="prev-dot" style="width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite"></div>
+        <span id="prev-title" style="font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:2px;text-transform:uppercase">PREVIEW</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <a id="prev-link" href="#" target="_blank" rel="noreferrer" style="display:none;background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.3);color:#00ff88;padding:4px 11px;border-radius:7px;font-size:9px;text-decoration:none;font-weight:800;letter-spacing:1px">↗ LIVE</a>
+        <button onclick="closePreview()" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);padding:4px 9px;border-radius:7px;cursor:pointer;font-size:11px">✕</button>
+      </div>
+    </div>
+    <div id="preview-content" style="flex:1;overflow:hidden;position:relative"></div>
+    <div id="url-bar" style="display:none;padding:7px 14px;border-top:1px solid rgba(0,255,136,0.15);background:rgba(0,255,136,0.04);display:none;align-items:center;gap:8px;flex-shrink:0">
+      <div style="width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0"></div>
+      <div id="url-text" style="flex:1;font-size:11px;color:var(--green);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <button onclick="copyUrl()" style="background:transparent;border:1px solid rgba(0,255,136,0.25);color:rgba(0,255,136,0.7);padding:3px 9px;border-radius:5px;cursor:pointer;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:1px;flex-shrink:0">COPY</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <div>⚡ SPARK GENESIS · ZERO-LOGIN · AUTO-SAVE · OWN AI ENGINE · ALL LANGUAGES · WEB CONNECTED</div>
+  <div style="display:flex;gap:14px">
+    <span id="stat-projects">0 PROJECTS</span>
+    <span id="stat-images">0 IMAGES</span>
+    <span id="stat-memories">0 MEMORIES</span>
+    <span id="stat-status">● IDLE</span>
+  </div>
+</div>
+
+<script>
+// ── STATE ───────────────────────────────────────────────────
+const state = {
+  mod: "build",
+  busy: false,
+  projects: [],
+  market: [],
+  images: [],
+  memories: [],
+  facts: [],
+  currentHtml: null,
+  currentUrl: null,
+  videoFrames: [],
+  videoFrame: 0,
+  videoPlaying: false,
+  videoInterval: null,
+  activeAgent: null,
+  imgStyle: "photo",
+  imgCount: 4,
+  vidFrames: 8,
+  vidStyle: "cinematic",
+  mc: "#00ff88",
+  listening: false,
+  recog: null,
+};
+
+const uid = (() => {
+  let id = localStorage.getItem("spark_genesis_uid");
+  if (!id) { id = "usr_" + Math.random().toString(36).slice(2,10) + Date.now().toString(36); localStorage.setItem("spark_genesis_uid", id); }
+  return id;
+})();
+
+// ── STORAGE ─────────────────────────────────────────────────
+async function dbGet(k) { try { const r = await window.storage?.get(k); return r ? JSON.parse(r.value) : JSON.parse(localStorage.getItem(k)||"null"); } catch { return JSON.parse(localStorage.getItem(k)||"null"); } }
+async function dbSet(k, v) { try { await window.storage?.set(k, JSON.stringify(v)); localStorage.setItem(k, JSON.stringify(v)); } catch { localStorage.setItem(k, JSON.stringify(v)); } }
+
+// ── MODULES ─────────────────────────────────────────────────
+const MODULES = [
+  {id:"build",icon:"⚡",name:"Builder",color:"#00ff88"},
+  {id:"image",icon:"🎨",name:"AI Obraz",color:"#f472b6"},
+  {id:"video",icon:"🎬",name:"AI Video",color:"#fb923c"},
+  {id:"code",icon:"💻",name:"Kód",color:"#60a5fa"},
+  {id:"agent",icon:"🤖",name:"Agenti",color:"#a78bfa"},
+  {id:"files",icon:"📁",name:"Soubory",color:"#34d399"},
+  {id:"docs",icon:"📄",name:"Dokumenty",color:"#fbbf24"},
+  {id:"translate",icon:"🌍",name:"Překlad",color:"#67e8f9"},
+  {id:"search",icon:"🔍",name:"Web",color:"#f9a8d4"},
+  {id:"learn",icon:"🧠",name:"Paměť",color:"#86efac"},
+  {id:"market",icon:"🛒",name:"Prodejna",color:"#c084fc"},
+  {id:"chat",icon:"💬",name:"Chat",color:"#fdba74"},
+];
+
+const AGENTS = [
+  {id:"dev",icon:"👨‍💻",name:"Dev Agent",desc:"Píše a opravuje kód",color:"#60a5fa"},
+  {id:"design",icon:"🎨",name:"Design Agent",desc:"Navrhuje UI/UX",color:"#f472b6"},
+  {id:"research",icon:"🔬",name:"Research Agent",desc:"Hledá info z webu",color:"#fbbf24"},
+  {id:"writer",icon:"✍️",name:"Writer Agent",desc:"Píše texty a dokumenty",color:"#34d399"},
+  {id:"seo",icon:"📈",name:"SEO Agent",desc:"Optimalizuje obsah",color:"#fb923c"},
+  {id:"data",icon:"📊",name:"Data Agent",desc:"Analyzuje data",color:"#a78bfa"},
+  {id:"security",icon:"🔒",name:"Security Agent",desc:"Kontroluje bezpečnost",color:"#f87171"},
+  {id:"auto",icon:"⚙️",name:"Auto Agent",desc:"Automatizuje úkoly",color:"#67e8f9"},
+];
+
+const BUILD_STAGES = ["🧠 Analyzuji...","📐 Architektura...","✍️ HTML & CSS...","⚡ JavaScript...","🤖 AI integrace...","🎨 Design...","🚀 Deploy..."];
+const IMG_STYLES = ["photo","art","anime","logo","ui","3d","painting","sketch","cinematic","pixel"];
+const VID_STYLES = ["cinematic","art","anime","photo","3d"];
+
+// ── INIT ────────────────────────────────────────────────────
+async function init() {
+  document.getElementById("uid-display").textContent = uid.slice(0,10);
+  renderModules();
+  setMod("build");
+  const p = await dbGet("genesis2_projects");
+  const m = await dbGet("genesis2_market");
+  const imgs = await dbGet("genesis2_images");
+  const facts = await dbGet("genesis2_facts");
+  if (p) state.projects = p;
+  if (m) state.market = m;
+  if (imgs) state.images = imgs;
+  if (facts) { state.facts = facts; }
+  updateStats();
+  showWelcome();
+}
+
+function renderModules() {
+  const el = document.getElementById("modules");
+  el.innerHTML = MODULES.map(m => `
+    <button class="modbtn${m.id===state.mod?" on":""}" id="mod-${m.id}"
+      onclick="setMod('${m.id}')"
+      style="${m.id===state.mod?`background:${m.color};color:#000;border-color:transparent`:""}"
+    ><span style="font-size:12px">${m.icon}</span><span>${m.name}</span></button>
+  `).join("");
+}
+
+function setMod(id) {
+  state.mod = id;
+  const m = MODULES.find(x=>x.id===id);
+  state.mc = m?.color || "#00ff88";
+  document.documentElement.style.setProperty("--mc", state.mc);
+  renderModules();
+  updateExecBtn();
+  updateSubpanels();
+  document.getElementById("logo").style.color = state.mc;
+}
+
+function updateExecBtn() {
+  const btn = document.getElementById("exec-btn");
+  btn.style.background = state.mc;
+  const labels = {build:"⚡ BUILD & DEPLOY",image:"🎨 GENERATE",video:"🎬 CREATE VIDEO",code:"💻 CODE",translate:"🌍 TRANSLATE",search:"🔍 SEARCH WEB",agent:"▶ RUN",files:"📎 ANALYZE",docs:"📄 CREATE DOC",learn:"🧠 REMEMBER",market:"🛒 MARKET",chat:"💬 SEND"};
+  btn.textContent = labels[state.mod] || "▶ EXECUTE";
+}
+
+function updateSubpanels() {
+  ["img-controls","vid-controls","agent-panel","memory-panel","market-panel"].forEach(id => {
+    document.getElementById(id).style.display = "none";
+  });
+  if (state.mod==="image") renderImgControls();
+  if (state.mod==="video") renderVidControls();
+  if (state.mod==="agent") renderAgentPanel();
+  if (state.mod==="learn") renderMemoryPanel();
+  if (state.mod==="market") renderMarketPanel();
+
+  const ph = {
+    build:"Postav cokoliv — v libovolném jazyce... (Ctrl+Enter)",
+    image:"Popiš obrázek který chceš vygenerovat...",
+    video:"Popiš scénu pro AI video...",
+    code:"Jaký kód potřebuješ? Jakýkoliv jazyk...",
+    agent:"Vyber agenta nahoře a zadej úkol...",
+    files:"Zadej otázku nebo klikni 📎 pro nahrání souboru...",
+    docs:"Popiš dokument který chceš vytvořit...",
+    translate:"Co přeložit a do jakého jazyka?",
+    search:"Co hledat na live internetu?",
+    learn:"Zadej co si má Spark zapamatovat...",
+    market:"Zeptej se na produkty v prodejně...",
+    chat:"Zeptej se na cokoliv...",
+  };
+  document.getElementById("main-input").placeholder = ph[state.mod] || "Zadej příkaz...";
+}
+
+// ── SUBPANEL RENDERERS ───────────────────────────────────────
+function renderImgControls() {
+  const el = document.getElementById("img-controls");
+  el.style.display = "block";
+  el.innerHTML = `
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+      ${IMG_STYLES.map(s=>`<button class="chip${s===state.imgStyle?` style="color:${state.mc};border-color:${state.mc}50;background:${state.mc}10"`:""}" onclick="state.imgStyle='${s}';renderImgControls()">${s}</button>`).join("")}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:rgba(255,255,255,0.3)">
+      <span>Počet:</span>
+      ${[1,2,4,6].map(n=>`<button class="chip${n===state.imgCount?` style="color:${state.mc};border-color:${state.mc}50"`:""}" onclick="state.imgCount=${n};renderImgControls()">${n}x</button>`).join("")}
+    </div>
+  `;
+}
+
+function renderVidControls() {
+  const el = document.getElementById("vid-controls");
+  el.style.display = "block";
+  el.innerHTML = `
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">
+      ${VID_STYLES.map(s=>`<button class="chip${s===state.vidStyle?` style="color:${state.mc};border-color:${state.mc}50"`:""}" onclick="state.vidStyle='${s}';renderVidControls()">${s}</button>`).join("")}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:rgba(255,255,255,0.3)">
+      <span>Frames:</span>
+      ${[4,8,12,16].map(n=>`<button class="chip${n===state.vidFrames?` style="color:${state.mc};border-color:${state.mc}50"`:""}" onclick="state.vidFrames=${n};renderVidControls()">${n}</button>`).join("")}
+    </div>
+  `;
+}
+
+function renderAgentPanel() {
+  const el = document.getElementById("agent-panel");
+  el.style.display = "block";
+  el.innerHTML = `
+    <div style="font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Vyber agenta</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+      ${AGENTS.map(a=>`
+        <button class="agent-card${state.activeAgent?.id===a.id?" sel":""}" onclick="state.activeAgent=${JSON.stringify(a).replace(/"/g,"'")};selectAgent('${a.id}')"
+          style="${state.activeAgent?.id===a.id?`border-color:${a.color}50;background:${a.color}10`:""}"
+        >
+          <div style="font-size:18px;margin-bottom:3px">${a.icon}</div>
+          <div style="font-size:11px;font-weight:700;color:${state.activeAgent?.id===a.id?a.color:"rgba(255,255,255,0.7)"}">${a.name}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;line-height:1.4">${a.desc}</div>
+        </button>
+      `).join("")}
+    </div>
+    <div id="agent-input-row" style="display:${state.activeAgent?"flex":"none"};gap:8px">
+      <input id="agent-task" class="inp" style="height:38px;padding:8px 13px;font-size:12px" placeholder="Zadej úkol pro agenta..."
+        onkeydown="if(event.key==='Enter')runActiveAgent()">
+      <button onclick="runActiveAgent()" style="background:${state.mc};border:none;color:#000;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:800;letter-spacing:1px;flex-shrink:0">▶ RUN</button>
+    </div>
+  `;
+}
+
+function selectAgent(id) {
+  state.activeAgent = AGENTS.find(a=>a.id===id);
+  renderAgentPanel();
+}
+
+function renderMemoryPanel() {
+  const el = document.getElementById("memory-panel");
+  el.style.display = "block";
+  if (!state.facts.length) { el.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.2);padding:4px 0">Zatím žádné vzpomínky. Zadej co si má Spark zapamatovat.</div>`; return; }
+  el.innerHTML = `
+    <div style="font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">🧠 PAMĚŤ (${state.facts.length})</div>
+    ${state.facts.slice(0,10).map(f=>`<div style="font-size:11px;color:rgba(255,255,255,0.45);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)">• ${f.fact}</div>`).join("")}
+  `;
+}
+
+function renderMarketPanel() {
+  const el = document.getElementById("market-panel");
+  el.style.display = "block";
+  if (!state.market.length) { el.innerHTML = `<div style="font-size:11px;color:rgba(255,255,255,0.2)">Prodejna je prázdná. Postav projekt a automaticky se přidá.</div>`; return; }
+  el.innerHTML = `
+    <div style="font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">🛒 PRODEJNA (${state.market.length})</div>
+    ${state.market.slice(0,8).map(m=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.market?.title||m.name}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.25)">${m.market?.desc||""}</div>
+        </div>
+        <div style="font-size:14px;font-weight:800;color:var(--green);font-family:'Orbitron',sans-serif;flex-shrink:0">${m.market?.price||999} Kč</div>
+      </div>
+    `).join("")}
+  `;
+}
+
+// ── CLAUDE API ───────────────────────────────────────────────
+async function callClaude(system, user, maxTokens=4000, useSearch=false) {
+  // Try server-side API first (when deployed), fallback to direct
+  let endpoint = "/api/claude";
+  let body = { system, user, maxTokens, useSearch };
+
+  try {
+    const r = await fetch(endpoint, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+    if (!r.ok) throw new Error("Server API failed");
+    const d = await r.json();
+    return d.content?.map(b=>b.text||"").filter(Boolean).join("\n") || "";
+  } catch {
+    // Direct API fallback (for local testing)
+    const apiBody = { model:"claude-sonnet-4-20250514", max_tokens:maxTokens, system, messages:[{role:"user",content:user}] };
+    if (useSearch) apiBody.tools = [{type:"web_search_20250305",name:"web_search"}];
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(apiBody)
+    });
+    const d = await r.json();
+    return d.content?.map(b=>b.text||"").filter(Boolean).join("\n") || "";
+  }
+}
+
+async function deployApp(html) {
+  try {
+    // Try server deploy endpoint first
+    const r = await fetch("/api/deploy", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({html}) });
+    if (r.ok) { const d = await r.json(); return d.url; }
+  } catch {}
+  try {
+    const r = await fetch("https://codesandbox.io/api/v1/sandboxes/define?json=1", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({files:{"index.html":{content:html}}})
+    });
+    const d = await r.json();
+    if (d.sandbox_id) return `https://${d.sandbox_id}.csb.app`;
+  } catch {}
+  return null;
+}
+
+// ── LANGUAGE DETECTION ───────────────────────────────────────
+function detectLang(t="") {
+  if (/[áčďéěíňóřšťúůýž]/i.test(t)) return "cs";
+  if (/[äöüß]/i.test(t)) return "de";
+  if (/[àâçéèêëîïôùûüÿ]/i.test(t)) return "fr";
+  if (/[áéíóúüñ¿]/i.test(t)) return "es";
+  if (/[\u4e00-\u9fff]/.test(t)) return "zh";
+  if (/[\u3040-\u30ff]/.test(t)) return "ja";
+  if (/[а-яА-Я]/.test(t)) return "ru";
+  if (/[\u0600-\u06FF]/.test(t)) return "ar";
+  if (/[ąćęłńóśźż]/i.test(t)) return "pl";
+  return "en";
+}
+
+function onInputChange() {
+  const v = document.getElementById("main-input").value;
+  const l = detectLang(v);
+  document.getElementById("lang-detect").textContent = v ? `${l.toUpperCase()} DETECTED · CTRL+ENTER` : "ZERO-LOGIN · AUTO-SAVE · ALL LANGUAGES";
+}
+
+function getMemCtx() {
+  if (!state.facts.length) return "";
+  return "\n\nUSER MEMORY:\n" + state.facts.slice(0,8).map(f=>f.fact).join("\n");
+}
+
+async function learnFromInteraction(userMsg, aiResp) {
+  try {
+    const fact = await callClaude(`Extract a short memorable fact (max 15 words) from this interaction or return "SKIP".`, `User: ${userMsg}\nAI: ${aiResp.slice(0,150)}`, 80);
+    if (fact && !fact.includes("SKIP") && fact.length > 5) {
+      state.facts = [{id:Date.now(),fact:fact.trim(),ts:new Date().toISOString()},...state.facts].slice(0,50);
+      await dbSet("genesis2_facts", state.facts);
+      document.getElementById("mem-count").textContent = `🧠 ${state.facts.length} memories · CTRL+ENTER`;
+    }
+  } catch {}
+}
+
+// ── BUILD APP ────────────────────────────────────────────────
+async function buildApp(cmd) {
+  setBusy(true);
+  let stageI = 0, prog = 0;
+  const stageInt = setInterval(()=>{
+    prog += Math.random()*1.5+0.3;
+    if(prog>88) prog=88;
+    stageI = Math.min(Math.floor((prog/88)*(BUILD_STAGES.length-1)),BUILD_STAGES.length-2);
+    updateBuildProgress(prog, BUILD_STAGES[stageI]);
+  },250);
+
+  try {
+    const html = await callClaude(
+      `You are SPARK GENESIS — world's most powerful AI app builder. Create COMPLETE, production web apps in a single HTML file.
+RULES: Return ONLY clean HTML. Nothing else. No backticks.
+All in one file. UI language: ${detectLang(cmd)}. OLED dark design. Google Fonts. Smooth animations. Mobile-first. localStorage. Maximum ambition.
+CDN: Monaco Editor, Chart.js, Three.js r128, Font Awesome 6, Animate.css.
+BUILD: IDE→Monaco+file tree, e-shop→cart+checkout, social→feed+stories, game→playable canvas, dashboard→Chart.js, CRM→CRUD, chat→messaging UI.
+${getMemCtx()}`,
+      `Build production app: ${cmd}`, 4000
+    );
+
+    clearInterval(stageInt);
+    updateBuildProgress(93, "🚀 Nasazuji na internet...");
+    const url = await deployApp(html);
+    updateBuildProgress(100, "✅ Hotovo!");
+
+    let mkt = {title:cmd.slice(0,40),desc:"AI-generated app",price:999,tags:["app","ai"]};
+    try {
+      const ml = await callClaude(`Return ONLY valid JSON no backticks: {"title":"max 40 chars","desc":"max 80 chars","price":199_to_4999,"tags":["t1","t2"]}`, `Listing for: ${cmd}`, 150);
+      mkt = JSON.parse(ml.replace(/```json|```/g,"").trim());
+    } catch {}
+
+    const proj = {id:Date.now().toString(),uid,name:cmd.slice(0,60),cmd,html,url:url||"",lang:detectLang(cmd),createdAt:new Date().toISOString(),type:"app",market:mkt,versions:[{v:1,html,url:url||"",ts:new Date().toISOString()}]};
+    state.projects = [proj,...state.projects];
+    state.market = [{...proj,listed:true},...state.market];
+    await dbSet("genesis2_projects",state.projects);
+    await dbSet("genesis2_market",state.market);
+
+    state.currentHtml = html;
+    state.currentUrl = url;
+    showPreview("app", html, url, cmd);
+    addMsg("assistant", url?`✅ Appka je LIVE!\n🌍 ${url}`:"✅ Appka postavena!", {url,html});
+    await learnFromInteraction(cmd, "Built: "+cmd);
+    notify("🎉 Live na internetu!");
+  } catch(e) {
+    clearInterval(stageInt);
+    addMsg("assistant","❌ Chyba: "+e.message);
+    notify("Chyba",false);
+  }
+  removeBuildProgress();
+  setBusy(false);
+}
+
+// ── AI IMAGES ────────────────────────────────────────────────
+function imgUrl(prompt, style, seed, w=1024, h=1024) {
+  const styles={photo:"photorealistic, 8k, ultra detailed, sharp focus",art:"digital art, artstation, concept art, vibrant masterpiece",anime:"anime style, studio quality, vibrant, beautiful illustration",logo:"professional logo design, vector art, minimal, clean brand",ui:"UI UX app mockup, modern interface, Figma quality",
+  "3d":"3D render, octane, studio lighting, hyperrealistic",painting:"oil painting, impressionist, museum quality, fine art",sketch:"detailed pencil sketch, artistic linework, illustration",cinematic:"cinematic photography, film still, dramatic lighting",pixel:"pixel art, 16bit retro game style, detailed sprites"};
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt+", "+(styles[style]||styles.photo))}?width=${w}&height=${h}&seed=${seed}&nologo=true&enhance=true`;
+}
+
+async function generateImages(prompt, style, count) {
+  setBusy(true);
+  const seeds = Array.from({length:count},(_,i)=>Math.floor(Math.random()*99999)+i*777);
+  const sizes=[[1024,1024],[1024,768],[768,1024],[1280,720]];
+  const imgs = seeds.map((seed,i)=>({id:Date.now()+i,url:imgUrl(prompt,style,seed,sizes[i%sizes.length][0],sizes[i%sizes.length][1]),prompt,style,seed,ts:new Date().toISOString()}));
+  state.images=[...imgs,...state.images].slice(0,100);
+  await dbSet("genesis2_images",state.images);
+  showPreview("images",null,null,prompt,imgs);
+  addMsg("assistant",`✅ ${count} obrázků vygenerováno!\n🎨 Vlastní FLUX AI engine — žádný Midjourney.`,{type:"images",imgs});
+  notify(`🎨 ${count} obrázků hotovo!`);
+  setBusy(false);
+}
+
+// ── AI VIDEO ────────────────────────────────────────────────
+async function generateVideo(prompt, frames, style) {
+  setBusy(true);
+  const phases=["establishing shot","main action","close up detail","wide angle","dramatic moment","transition","climax","resolution"];
+  const urls=[];
+  for(let i=0;i<frames;i++){
+    const phase=phases[Math.floor((i/frames)*phases.length)];
+    const seed=10000+i*137+Math.floor(Math.random()*50);
+    urls.push(imgUrl(`${prompt}, ${phase}, frame ${i+1}/${frames}, consistent scene`,style,seed,768,432));
+    updateBuildProgress(Math.round(((i+1)/frames)*90),`🎬 Frame ${i+1}/${frames}...`);
+    await new Promise(r=>setTimeout(r,100));
+  }
+  state.videoFrames=urls; state.videoFrame=0;
+  showPreview("video",null,null,prompt,null,urls);
+  addMsg("assistant",`✅ AI Video vygenerován! ${frames} frames · ${style}\n🎬 Vlastní video engine — žádný Runway.`,{type:"video",frameUrls:urls});
+  notify("🎬 Video hotovo!");
+  removeBuildProgress();
+  setBusy(false);
+}
+
+function playVideo() {
+  if(state.videoPlaying){clearInterval(state.videoInterval);state.videoPlaying=false;document.getElementById("vid-play-btn").textContent="▶";return;}
+  state.videoPlaying=true;document.getElementById("vid-play-btn").textContent="⏸";
+  state.videoInterval=setInterval(()=>{
+    state.videoFrame=(state.videoFrame+1)%state.videoFrames.length;
+    updateVideoFrame();
+    if(state.videoFrame===0){clearInterval(state.videoInterval);state.videoPlaying=false;document.getElementById("vid-play-btn").textContent="▶";}
+  },200);
+}
+
+function updateVideoFrame(){
+  const img=document.getElementById("video-img");
+  const prog=document.getElementById("vid-prog");
+  const counter=document.getElementById("vid-counter");
+  if(img)img.src=state.videoFrames[state.videoFrame];
+  if(prog)prog.style.width=`${(state.videoFrame/(state.videoFrames.length-1))*100}%`;
+  if(counter)counter.textContent=`${state.videoFrame+1} / ${state.videoFrames.length}`;
+}
+
+// ── CODE GENERATION ──────────────────────────────────────────
+async function generateCode(cmd) {
+  setBusy(true);
+  try {
+    const l=detectLang(cmd);
+    const code=await callClaude(`Expert programmer. Production code with comments. Use markdown code blocks. Respond in ${l==="cs"?"Czech":l==="de"?"German":"English"}.${getMemCtx()}`,cmd);
+    addMsg("assistant",code,{type:"code"});
+    await learnFromInteraction(cmd,code.slice(0,100));
+  } catch(e){addMsg("assistant","❌ "+e.message);}
+  setBusy(false);
+}
+
+// ── AI AGENTS ────────────────────────────────────────────────
+async function runActiveAgent(){
+  const task=document.getElementById("agent-task").value.trim();
+  if(!task||!state.activeAgent)return;
+  document.getElementById("agent-task").value="";
+  addMsg("user",`🤖 [${state.activeAgent.name}]: ${task}`);
+  setBusy(true);
+  const prompts={
+    dev:`Expert software developer agent. Write code, explain it, suggest improvements.`,
+    design:`UI/UX design agent. Create design specs, color palettes, layouts in markdown.`,
+    research:`Research agent. Find current information, cite sources, comprehensive analysis.`,
+    writer:`Professional writer agent. Create high-quality, engaging content with structure.`,
+    seo:`SEO optimization agent. Analyze content, suggest keywords, meta tags, improvements.`,
+    data:`Data analysis agent. Insights, visualizations, statistical analysis, recommendations.`,
+    security:`Security analysis agent. Check vulnerabilities, OWASP compliance, best practices.`,
+    auto:`Automation agent. Break task into steps, create workflow, provide implementation.`,
+  };
+  try {
+    const useWeb=["research","seo"].includes(state.activeAgent.id);
+    const result=await callClaude((prompts[state.activeAgent.id]||prompts.dev)+getMemCtx(),task,2000,useWeb);
+    addMsg("assistant",`### 🤖 ${state.activeAgent.name}\n\n${result}`);
+    notify(`✅ ${state.activeAgent.name} dokončil!`);
+  } catch(e){addMsg("assistant","❌ "+e.message);}
+  setBusy(false);
+}
+
+// ── FILE ANALYSIS ────────────────────────────────────────────
+async function handleFile(e) {
+  const file=e.target.files?.[0]; if(!file)return;
+  addMsg("user",`📁 ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
+  setBusy(true);
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const content=ev.target.result;
+    const isText=typeof content==="string";
+    const preview=isText?content.slice(0,3000):"[binary file]";
+    if(file.type.startsWith("image/")){
+      addMsg("assistant",`🖼️ Obrázek načten.`,{imagePreview:URL.createObjectURL(file)});
+      setBusy(false); return;
+    }
+    try {
+      const analysis=await callClaude(`File analysis expert. Detailed insights, summary, actionable suggestions. Respond in ${detectLang(preview)==="cs"?"Czech":"English"}.${getMemCtx()}`,`File: ${file.name}\nContent:\n${preview}`);
+      addMsg("assistant",`📁 **${file.name}**\n\n${analysis}`);
+      notify(`📁 ${file.name} analyzován!`);
+    } catch(e2){addMsg("assistant","❌ "+e2.message);}
+    setBusy(false);
+  };
+  if(file.type.startsWith("image/"))reader.readAsDataURL(file);
+  else reader.readAsText(file);
+  e.target.value="";
+}
+
+// ── DOCUMENTS ────────────────────────────────────────────────
+async function generateDoc(cmd) {
+  setBusy(true);
+  try {
+    const l=detectLang(cmd);
+    const doc=await callClaude(`Professional document creator. Well-structured markdown. Respond in ${l==="cs"?"Czech":l==="de"?"German":"English"}.${getMemCtx()}`,`Create document: ${cmd}`);
+    addMsg("assistant",doc,{type:"doc"});
+    const blob=new Blob([`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Dokument</title><style>body{font-family:Georgia,serif;max-width:820px;margin:50px auto;padding:0 24px;line-height:1.9;color:#222}h1,h2,h3{border-bottom:2px solid #eee;padding-bottom:8px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:10px}@media print{.np{display:none}}</style></head><body><div class="np" style="background:#f0f7ff;padding:12px 20px;border-radius:8px;margin-bottom:24px;font-size:14px">📄 SPARK GENESIS · <a href="javascript:window.print()">Tisk/PDF</a></div>${doc.replace(/\n/g,"<br>")}</body></html>`],{type:"text/html"});
+    addMsg("assistant","📄 Ke stažení:",{downloadUrl:URL.createObjectURL(blob),downloadName:"dokument.html"});
+    notify("📄 Dokument hotov!");
+  } catch(e){addMsg("assistant","❌ "+e.message);}
+  setBusy(false);
+}
+
+// ── TRANSLATE ────────────────────────────────────────────────
+async function translate(cmd) {
+  setBusy(true);
+  try {
+    const result=await callClaude(`Professional translator. Auto-detect source. If no target given, translate to EN🇬🇧 CS🇨🇿 DE🇩🇪 FR🇫🇷 ES🇪🇸 ZH🇨🇳 JA🇯🇵 RU🇷🇺 AR🇸🇦 PT🇧🇷. Format: FLAG LANG: translation.`,`Translate: ${cmd}`);
+    addMsg("assistant",result);
+  } catch(e){addMsg("assistant","❌ "+e.message);}
+  setBusy(false);
+}
+
+// ── WEB SEARCH ───────────────────────────────────────────────
+async function webSearch(cmd) {
+  setBusy(true);
+  try {
+    const l=detectLang(cmd);
+    const result=await callClaude(`Web research assistant with live internet. Current info, cite sources. Respond in ${l==="cs"?"Czech":"English"}.`,cmd,1500,true);
+    addMsg("assistant",result,{type:"search"});
+  } catch(e){addMsg("assistant","❌ "+e.message);}
+  setBusy(false);
+}
+
+// ── EDIT PROJECT ─────────────────────────────────────────────
+async function doEdit() {
+  const cmd=document.getElementById("edit-input").value.trim();
+  if(!cmd||!state.currentHtml)return;
+  document.getElementById("edit-input").value="";
+  document.getElementById("edit-bar").style.display="none";
+  addMsg("user",`✏️ Edit: ${cmd}`);
+  setBusy(true);
+  try {
+    const html=await callClaude(`AI code editor. Given HTML app and edit instruction, return ONLY complete modified HTML. Nothing else.`,`App:\n${state.currentHtml.slice(0,3500)}\n\nEdit: ${cmd}`,4000);
+    const url=await deployApp(html);
+    state.currentHtml=html; state.currentUrl=url;
+    const proj=state.projects.find(p=>p.html===state.currentHtml);
+    if(proj){const newV=(proj.versions?.length||1)+1;proj.html=html;proj.url=url||proj.url;proj.versions=[...(proj.versions||[]),{v:newV,html,url:url||"",ts:new Date().toISOString()}];await dbSet("genesis2_projects",state.projects);}
+    showPreview("app",html,url,"Updated");
+    addMsg("assistant",`✅ Aktualizováno!${url?"\n🌍 "+url:""}`,{url});
+    notify("✅ Update live!");
+  } catch(e){addMsg("assistant","❌ "+e.message);}
+  setBusy(false);
+}
+
+// ── CHAT ─────────────────────────────────────────────────────
+async function chatWithAI(cmd) {
+  setBusy(true);
+  try {
+    const l=detectLang(cmd);
+    const result=await callClaude(`You are SPARK GENESIS — the most advanced AI. You can do anything. Helpful, knowledgeable, proactive. Exceed expectations. Respond in ${l==="cs"?"Czech":l==="de"?"German":l==="fr"?"French":l==="es"?"Spanish":"English"}.${getMemCtx()}`,cmd,2000);
+    addMsg("assistant",result);
+    await learnFromInteraction(cmd,result);
+  } catch(e){addMsg("assistant","❌ "+e.message);}
+  setBusy(false);
+}
+
+// ── EXECUTE ──────────────────────────────────────────────────
+function execute() {
+  const inp=document.getElementById("main-input");
+  const cmd=inp.value.trim();
+  if(!cmd||state.busy)return;
+  inp.value="";
+  addMsg("user",cmd);
+  if(state.mod==="build")buildApp(cmd);
+  else if(state.mod==="image")generateImages(cmd,state.imgStyle,state.imgCount);
+  else if(state.mod==="video")generateVideo(cmd,state.vidFrames,state.vidStyle);
+  else if(state.mod==="code")generateCode(cmd);
+  else if(state.mod==="docs")generateDoc(cmd);
+  else if(state.mod==="translate")translate(cmd);
+  else if(state.mod==="search")webSearch(cmd);
+  else if(state.mod==="learn"){
+    state.facts=[{id:Date.now(),fact:cmd,ts:new Date().toISOString(),manual:true},...state.facts].slice(0,50);
+    dbSet("genesis2_facts",state.facts);
+    addMsg("assistant",`🧠 Zapamatováno: "${cmd}"\n\nCelkem v paměti: ${state.facts.length} faktů.`);
+    document.getElementById("mem-count").textContent=`🧠 ${state.facts.length} memories`;
+    renderMemoryPanel();
+  }
+  else chatWithAI(cmd);
+}
+
+// ── VOICE ────────────────────────────────────────────────────
+function toggleVoice() {
+  if(state.listening){state.recog?.stop();state.listening=false;document.getElementById("mic-btn").textContent="🎤";document.getElementById("mic-btn").classList.remove("on");return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){notify("Hlasové ovládání nepodporováno",false);return;}
+  const l=detectLang(document.getElementById("main-input").value);
+  const r=new SR();
+  r.lang=l==="cs"?"cs-CZ":l==="de"?"de-DE":l==="fr"?"fr-FR":l==="es"?"es-ES":l==="zh"?"zh-CN":l==="ru"?"ru-RU":"en-US";
+  r.onstart=()=>{state.listening=true;document.getElementById("mic-btn").textContent="🔴";document.getElementById("mic-btn").classList.add("on")};
+  r.onresult=e=>{document.getElementById("main-input").value=e.results[0][0].transcript;state.listening=false;document.getElementById("mic-btn").textContent="🎤";document.getElementById("mic-btn").classList.remove("on");};
+  r.onerror=r.onend=()=>{state.listening=false;document.getElementById("mic-btn").textContent="🎤";document.getElementById("mic-btn").classList.remove("on");};
+  state.recog=r; r.start();
+}
+
+// ── PREVIEW ──────────────────────────────────────────────────
+function showPreview(type, html, url, title, imgs, videoFrames) {
+  const right=document.getElementById("right");
+  const left=document.getElementById("left");
+  right.style.display="flex";
+  left.style.width="40%";
+  document.getElementById("edit-toggle").style.display=type==="app"?"flex":"none";
+
+  document.getElementById("prev-title").textContent=type==="app"?"LIVE PREVIEW":type==="images"?"AI IMAGES":"AI VIDEO";
+  document.getElementById("prev-dot").style.background=state.mc;
+  document.getElementById("prev-dot").style.boxShadow=`0 0 8px ${state.mc}`;
+
+  if(url){
+    const lnk=document.getElementById("prev-link");
+    lnk.style.display="block"; lnk.href=url;
+    lnk.style.background=`${state.mc}18`; lnk.style.borderColor=`${state.mc}40`; lnk.style.color=state.mc;
+    document.getElementById("url-bar").style.display="flex";
+    document.getElementById("url-text").textContent=url;
+    document.getElementById("url-text").style.color=state.mc;
+  } else {
+    document.getElementById("prev-link").style.display="none";
+    document.getElementById("url-bar").style.display="none";
+  }
+
+  const content=document.getElementById("preview-content");
+  if(type==="app"&&html){
+    content.innerHTML=`<iframe srcdoc="" style="width:100%;height:100%;border:none" sandbox="allow-scripts allow-same-origin"></iframe>`;
+    content.querySelector("iframe").srcdoc=html;
+  } else if(type==="images"&&imgs){
+    content.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px;overflow-y:auto;height:100%">${
+      imgs.map((img,i)=>`<div class="img-card"><img src="${img.url}" alt="${img.prompt}" loading="lazy" onerror="this.parentElement.innerHTML='<div style=height:180px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.2);font-size:11px>Načítání...</div>'"><div style="padding:8px 10px"><div style="font-size:10px;color:rgba(255,255,255,0.3)">${img.style}</div><a href="${img.url}" target="_blank" download style="font-size:9px;color:${state.mc};text-decoration:none;font-weight:700;letter-spacing:1px">⬇ STÁHNOUT</a></div></div>`).join("")
+    }</div>`;
+  } else if(type==="video"&&videoFrames){
+    state.videoFrames=videoFrames; state.videoFrame=0;
+    content.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:20px">
+      <div id="video-player" style="width:100%;max-width:700px">
+        <img id="video-img" src="${videoFrames[0]}" style="width:100%;display:block;min-height:200px;object-fit:cover">
+        <div id="video-controls" style="position:relative;background:rgba(0,0,0,0.9);padding:12px 16px">
+          <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-bottom:10px;cursor:pointer" onclick="seekVideo(event,this)">
+            <div id="vid-prog" style="height:100%;background:${state.mc};border-radius:2px;width:0%;transition:width 0.1s"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button onclick="state.videoFrame=0;updateVideoFrame()" style="background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer">⏮</button>
+            <button id="vid-play-btn" onclick="playVideo()" style="background:${state.mc};border:none;color:#000;width:36px;height:36px;border-radius:50%;font-size:16px;cursor:pointer;font-weight:800">▶</button>
+            <button onclick="state.videoFrame=state.videoFrames.length-1;updateVideoFrame()" style="background:transparent;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer">⏭</button>
+            <span id="vid-counter" style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;font-family:'JetBrains Mono',monospace">1/${videoFrames.length}</span>
+            <div style="flex:1"></div>
+            <span style="font-size:9px;color:${state.mc};letter-spacing:1px;font-family:'JetBrains Mono',monospace">SPARK AI VIDEO</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:1px;text-align:center">Vlastní AI Video Engine · ${videoFrames.length} frames · Žádný Runway</div>
+    </div>`;
+  }
+}
+
+function seekVideo(e,el){const r=el.getBoundingClientRect();const pct=(e.clientX-r.left)/r.width;state.videoFrame=Math.floor(pct*(state.videoFrames.length-1));updateVideoFrame();}
+
+function closePreview(){
+  document.getElementById("right").style.display="none";
+  document.getElementById("left").style.width="100%";
+  document.getElementById("edit-toggle").style.display="none";
+}
+
+// ── CHAT MESSAGES ────────────────────────────────────────────
+function addMsg(role, content, extra={}) {
+  const area=document.getElementById("chat-area");
+  const div=document.createElement("div");
+  div.className="msg";
+
+  const codeBlocks = content.split(/(```[\s\S]*?```)/g).map((part,i)=>{
+    if(part.startsWith("```")){
+      const code=part.replace(/```\w*\n?/,"").replace(/```$/,"");
+      return `<pre><code>${code.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</code></pre>`;
+    }
+    return `<span>${part.replace(/\n/g,"<br>").replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/#{3}\s(.+)/g,'<h3 style="font-size:13px;margin:8px 0 4px;color:rgba(255,255,255,0.9)">$1</h3>').replace(/#{2}\s(.+)/g,'<h2 style="font-size:14px;margin:10px 0 4px;color:rgba(255,255,255,0.9)">$1</h2>').replace(/#{1}\s(.+)/g,'<h1 style="font-size:16px;margin:10px 0 6px;color:rgba(255,255,255,0.9)">$1</h1>')}</span>`;
+  }).join("");
+
+  let actions="";
+  if(extra.url) actions+=`<a href="${extra.url}" target="_blank" rel="noreferrer" class="action-btn" style="background:${state.mc}18;border:1px solid ${state.mc}40;color:${state.mc};margin-top:10px">🌍 OPEN LIVE ↗</a> <button class="action-btn" onclick="navigator.clipboard.writeText('${extra.url}');notify('URL zkopírována!')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4)">COPY URL</button>`;
+  if(extra.html&&extra.url) actions+=` <button class="action-btn" onclick="showPreview('app','${btoa(encodeURIComponent(extra.html)).slice(0,0)}...','${extra.url}','prev')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:rgba(255,255,255,0.35)">PREVIEW</button>`;
+  if(extra.downloadUrl) actions+=`<br><a href="${extra.downloadUrl}" download="${extra.downloadName||'dokument.html'}" class="action-btn" style="background:${state.mc}18;border:1px solid ${state.mc}40;color:${state.mc};margin-top:8px">⬇ STÁHNOUT</a>`;
+  if(extra.imagePreview) actions=`<br><img src="${extra.imagePreview}" style="max-width:100%;border-radius:8px;margin-top:8px">`;
+  if(extra.imgs) actions=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:10px">${extra.imgs.slice(0,4).map(img=>`<div style="border-radius:8px;overflow:hidden;border:1px solid ${state.mc}20;cursor:pointer" onclick="showPreview('images',null,null,'${img.prompt}',${JSON.stringify(extra.imgs)})"><img src="${img.url}" style="width:100%;display:block" onerror="this.style.display='none'"></div>`).join("")}</div>`;
+  if(extra.type==="video"&&extra.frameUrls) actions=`<button onclick="showPreview('video',null,null,'video',null,${JSON.stringify(extra.frameUrls)})" class="action-btn" style="background:${state.mc}18;border:1px solid ${state.mc}40;color:${state.mc};margin-top:10px">▶ OTEVŘÍT VIDEO (${extra.frameUrls.length} frames)</button>`;
+
+  div.innerHTML=`
+    <div style="font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:1px;margin-bottom:4px;text-transform:uppercase">${role==="user"?"▶ TY":`◀ SPARK · ${new Date().toLocaleTimeString("cs-CZ",{hour:"2-digit",minute:"2-digit"})}`}</div>
+    <div style="background:${role==="user"?"rgba(255,255,255,0.03)":`${state.mc}08`};border:1px solid ${role==="user"?"rgba(255,255,255,0.06)":state.mc+"18"};border-radius:10px;padding:11px 14px;font-size:12.5px;line-height:1.8;color:${role==="assistant"?"rgba(255,255,255,0.82)":"rgba(255,255,255,0.55)"}">${codeBlocks}${actions}</div>
+  `;
+  area.appendChild(div);
+  area.scrollTop=area.scrollHeight;
+  updateStats();
+}
+
+// ── PROGRESS ─────────────────────────────────────────────────
+let progressEl=null;
+function updateBuildProgress(pct,label){
+  if(!progressEl){
+    progressEl=document.createElement("div");
+    progressEl.className="msg";
+    progressEl.id="build-progress-msg";
+    document.getElementById("chat-area").appendChild(progressEl);
+  }
+  progressEl.innerHTML=`
+    <div style="font-size:9px;color:${state.mc}80;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase">◀ SPARK · BUILDING</div>
+    <div style="background:${state.mc}07;border:1px solid ${state.mc}18;border-radius:10px;padding:13px 16px">
+      <div style="font-size:12px;color:${state.mc};margin-bottom:10px;animation:pulse 1s infinite">${label}</div>
+      <div style="height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,${state.mc},rgba(255,255,255,0.8),${state.mc});background-size:300% 100%;animation:shimmer 1.5s linear infinite;transition:width 0.5s ease;border-radius:2px"></div>
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:5px">${Math.round(pct)}%</div>
+    </div>
+  `;
+  document.getElementById("chat-area").scrollTop=99999;
+}
+function removeBuildProgress(){if(progressEl){progressEl.remove();progressEl=null;}}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function setBusy(v){state.busy=v;document.getElementById("exec-btn").disabled=v;document.getElementById("exec-btn").textContent=v?"⟳ RUNNING...":({build:"⚡ BUILD & DEPLOY",image:"🎨 GENERATE",video:"🎬 CREATE VIDEO",code:"💻 CODE",translate:"🌍 TRANSLATE",search:"🔍 SEARCH WEB"}[state.mod]||"▶ EXECUTE");document.getElementById("stat-status").textContent=v?"● RUNNING":"● IDLE";document.getElementById("stat-status").style.color=v?state.mc:"";}
+function notify(msg,ok=true){const el=document.getElementById("notif-el");el.style.display="block";el.textContent=msg;el.style.background=ok?`rgba(0,255,136,0.1)`:"rgba(248,113,113,0.1)";el.style.border=`1px solid ${ok?"rgba(0,255,136,0.3)":"rgba(248,113,113,0.3)"}`;el.style.color=ok?"#00ff88":"#f87171";setTimeout(()=>el.style.display="none",3500);}
+function updateStats(){document.getElementById("proj-btn").textContent=`📁 ${state.projects.length}`;document.getElementById("stat-projects").textContent=`${state.projects.length} PROJECTS`;document.getElementById("stat-images").textContent=`${state.images.length} IMAGES`;document.getElementById("stat-memories").textContent=`${state.facts.length} MEMORIES`;document.getElementById("mem-count").textContent=`🧠 ${state.facts.length} memories · CTRL+ENTER`;}
+function copyUrl(){navigator.clipboard.writeText(state.currentUrl||"");notify("URL zkopírována!");}
+function resetToHome(){document.getElementById("chat-area").innerHTML="";closePreview();showWelcome();}
+function toggleProjects(){const p=document.getElementById("projects-panel");p.style.display=p.style.display==="none"?"block":"none";if(p.style.display==="block")renderProjectsPanel();}
+function renderProjectsPanel(){const el=document.getElementById("projects-panel");el.innerHTML=`<div style="padding:8px 14px 6px;font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:2px;text-transform:uppercase">📁 PROJEKTY (${state.projects.length})</div>${state.projects.length===0?`<div style="padding:12px 14px;font-size:11px;color:rgba(255,255,255,0.2)">Zatím žádné.</div>`:state.projects.map(p=>`<div class="proj-row" onclick="loadProject('${p.id}')"><div style="width:6px;height:6px;border-radius:50%;background:${p.url?"#00ff88":"#60a5fa"};flex-shrink:0;box-shadow:${p.url?"0 0 6px #00ff88":"none"}"></div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,0.7)">${p.name}</div><div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:1px">${new Date(p.createdAt).toLocaleDateString("cs-CZ")} · ${p.lang?.toUpperCase()}</div></div>${p.url?`<a href="${p.url}" target="_blank" onclick="event.stopPropagation()" style="font-size:9px;color:#00ff88;border:1px solid rgba(0,255,136,0.3);padding:2px 7px;border-radius:4px;text-decoration:none;font-weight:700;letter-spacing:1px">LIVE</a>`:""}</div>`).join("")}`;}
+function loadProject(id){const p=state.projects.find(x=>x.id===id);if(!p)return;state.currentHtml=p.html;state.currentUrl=p.url;showPreview("app",p.html,p.url,p.name);document.getElementById("projects-panel").style.display="none";notify("Projekt načten");}
+function showWelcome(){document.getElementById("chat-area").innerHTML=`<div style="animation:fadeUp 0.5s ease;padding-top:8px"><div style="background:${state.mc}08;border:1px solid ${state.mc}18;border-radius:12px;padding:16px 20px;margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:${state.mc};margin-bottom:8px;letter-spacing:1px">⚡ SPARK GENESIS — READY</div><div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.9">Postav cokoliv · AI obrázky zdarma · AI video · 8 agentů · 100+ jazyků · Samoučení · Web search · Soubory · Dokumenty · Prodejna<br>Žádná registrace. Vše uloženo. Vše tvoje.</div></div><div style="font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Rychlé příkazy</div><div style="display:flex;flex-wrap:wrap;gap:5px">${["Postav Replit konkurenci","E-shop s košíkem","Vygeneruj 4 obrázky futuristického města","AI chatbot asistent","2D hra v prohlížeči","CRM systém","Dashboard s grafy","Instagram klon"].map(ex=>`<button class="chip" onclick="document.getElementById('main-input').value='${ex}';setMod(${ex.includes("obrázky")?"'image'":ex.includes("video")?"'video'":"'build'"});updateSubpanels()">${ex}</button>`).join("")}</div></div>`;}
+
+init();
+</script>
+</body>
+</html>
