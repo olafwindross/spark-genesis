@@ -1,4 +1,14 @@
-// --- TVŮJ REÁLNÝ PLATEBNÍ TERMINÁL ---
+    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; font-size: 12px; line-height: 1.6;">
+        <p><strong>Příjemce:</strong> Ľubomír Kašuba</p>
+        <p><strong>IBAN:</strong> <span style="letter-spacing: 1px; color: #00ff88;">LT71 3250 0054 8005 2494</span></p>
+        <p><strong>SWIFT/BIC:</strong> REVOLT21</p>
+        <p><strong>Banka:</strong> Revolut Bank UAB</p>
+    </div>
+    
+    <button style="width: 100%; margin-top: 15px; padding: 15px; background: #00ff88; color: #000; border: none; font-weight: bold; border-radius: 8px;">
+        POTVRDIT ODESLÁNÍ PLATBY
+    </button>
+</div>// --- TVŮJ REÁLNÝ PLATEBNÍ TERMINÁL ---
 const paymentHTML = `
     <div style="background: #001a0a; border: 2px solid #00ff88; padding: 25px; border-radius: 15px; color: #fff; text-align: left;">
         <h2 style="color: #00ff88; text-align: center; margin-top: 0;">💳 PLATEBNÍ ÚDAJE</h2>
